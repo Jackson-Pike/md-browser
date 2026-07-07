@@ -27,4 +27,10 @@ else
   cat /tmp/osa-compile.err
 fi
 
+setup="$root/commands/setup.md"
+[[ -f "$setup" ]] || fail "commands/setup.md missing"
+grep -q 'CLAUDE_PLUGIN_DATA' "$setup" || fail "setup.md must write to CLAUDE_PLUGIN_DATA"
+grep -q 'AskUserQuestion' "$setup"    || fail "setup.md must use AskUserQuestion"
+print -r -- "  ok: setup command present"
+
 print -r -- "PASS: manifests"
