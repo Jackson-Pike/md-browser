@@ -8,7 +8,7 @@
       "name": "md-browser",
       "description": "Opens edited Markdown files in your chosen macOS Chromium browser.",
       "version": "0.1.0",
-      "source": { "type": "github", "repo": "Jackson-Pike/md-browser" }
+      "source": { "source": "github", "repo": "Jackson-Pike/md-browser" }
     }
   ]
 }
