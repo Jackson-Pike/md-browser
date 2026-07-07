@@ -1,0 +1,5 @@
+{
+  "name": "md-browser",
+  "description": "Opens edited Markdown files in your chosen macOS Chromium browser (Arc/Chrome/Edge/Brave), reloading the existing tab instead of duplicating.",
+  "version": "0.1.0"
+}
