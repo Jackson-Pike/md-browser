@@ -16,11 +16,11 @@ work="$(mktemp -d)"
 export CLAUDE_PLUGIN_DATA="$work/data"
 export CLAUDE_PLUGIN_ROOT="$work/root"
 mkdir -p "$CLAUDE_PLUGIN_DATA" "$CLAUDE_PLUGIN_ROOT/bin" "$work/stubbin"
-# Stub osascript: record argv to a log instead of running AppleScript.
+# Stub osascript: record full argv to a log instead of running AppleScript.
+# Use unit-separator delimiter (\x1f) to disambiguate multi-word args like "Google Chrome".
 cat > "$work/stubbin/osascript" <<'EOF'
 #!/bin/zsh
-shift  # skip the applescript path; record only the arguments
-print -r -- "$@" >> "$OSA_LOG"
+printf '%s\x1f' "$@" >> "$OSA_LOG"
 EOF
 chmod +x "$work/stubbin/osascript"
 export PATH="$work/stubbin:$PATH"
@@ -38,21 +38,22 @@ writecfg() { print -r -- "$1" > "$CLAUDE_PLUGIN_DATA/config.json"; }
 # 1) No config yet -> no osascript call.
 rm -f "$CLAUDE_PLUGIN_DATA/config.json"
 check "no config = no-op" "" "$(run '{"tool_input":{"file_path":"/tmp/a.md"}}')"
+sep=$'\x1f'
 
 # 2) Config present, markdown, no scope -> calls osascript with file:// + browser + space.
 writecfg '{"browser":"Arc","space":"FS-Workbench"}'
-check "md opens" "file:///tmp/a.md Arc FS-Workbench" "$(run '{"tool_input":{"file_path":"/tmp/a.md"}}')"
+check "md opens" "$CLAUDE_PLUGIN_ROOT/bin/open-in-browser.applescript${sep}file:///tmp/a.md${sep}Arc${sep}FS-Workbench${sep}" "$(run '{"tool_input":{"file_path":"/tmp/a.md"}}')"
 
 # 3) Non-markdown -> no call.
 check "txt ignored" "" "$(run '{"tool_input":{"file_path":"/tmp/a.txt"}}')"
 
 # 4) Empty space passed through as empty arg.
 writecfg '{"browser":"Google Chrome"}'
-check "no space arg empty" "file:///tmp/a.md Google Chrome " "$(run '{"tool_input":{"file_path":"/tmp/a.md"}}')"
+check "no space arg empty" "$CLAUDE_PLUGIN_ROOT/bin/open-in-browser.applescript${sep}file:///tmp/a.md${sep}Google Chrome${sep}${sep}" "$(run '{"tool_input":{"file_path":"/tmp/a.md"}}')"
 
 # 5) Scope match.
 writecfg '{"browser":"Arc","scope":["**/specs/**/*.md"]}'
-check "in-scope opens" "file:///Users/x/specs/y/a.md Arc " "$(run '{"tool_input":{"file_path":"/Users/x/specs/y/a.md"}}')"
+check "in-scope opens" "$CLAUDE_PLUGIN_ROOT/bin/open-in-browser.applescript${sep}file:///Users/x/specs/y/a.md${sep}Arc${sep}${sep}" "$(run '{"tool_input":{"file_path":"/Users/x/specs/y/a.md"}}')"
 
 # 6) Scope miss -> no call.
 check "out-of-scope skipped" "" "$(run '{"tool_input":{"file_path":"/Users/x/other/a.md"}}')"
@@ -60,6 +61,14 @@ check "out-of-scope skipped" "" "$(run '{"tool_input":{"file_path":"/Users/x/oth
 # 7) Missing file_path -> no call.
 writecfg '{"browser":"Arc"}'
 check "no path no-op" "" "$(run '{"tool_input":{}}')"
+
+# 8) Empty scope (present-but-empty array) with markdown -> calls osascript.
+writecfg '{"browser":"Arc","scope":[]}'
+check "empty scope opens" "$CLAUDE_PLUGIN_ROOT/bin/open-in-browser.applescript${sep}file:///tmp/a.md${sep}Arc${sep}${sep}" "$(run '{"tool_input":{"file_path":"/tmp/a.md"}}')"
+
+# 9) Explicit null space with browser set -> space arg renders empty.
+writecfg '{"browser":"Arc","space":null}'
+check "null space empty" "$CLAUDE_PLUGIN_ROOT/bin/open-in-browser.applescript${sep}file:///tmp/a.md${sep}Arc${sep}${sep}" "$(run '{"tool_input":{"file_path":"/tmp/a.md"}}')"
 
 print -r -- "---"; print -r -- "pass=$pass fail=$fail"
 [[ $fail -eq 0 ]]
