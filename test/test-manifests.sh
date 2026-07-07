@@ -18,4 +18,13 @@ matcher="$(jq -r '.hooks.PostToolUse[0].matcher' "$root/hooks/hooks.json")"
 cmd="$(jq -r '.hooks.PostToolUse[0].hooks[0].command' "$root/hooks/hooks.json")"
 [[ "$cmd" == '${CLAUDE_PLUGIN_ROOT}/bin/open-md.sh' ]] || fail "hook command wrong: $cmd"
 
+# AppleScript must compile (terminology resolves). Requires Chrome installed
+# for the `using terms from application "Google Chrome"` block.
+if osacompile -o /dev/null "$root/bin/open-in-browser.applescript" 2>/tmp/osa-compile.err; then
+  print -r -- "  ok: applescript compiles"
+else
+  print -r -- "  WARN: applescript did not compile (is Google Chrome installed?):"
+  cat /tmp/osa-compile.err
+fi
+
 print -r -- "PASS: manifests"
