@@ -5,20 +5,28 @@ on run {targetURL, appName, spaceName}
 	if appName is "Arc" then
 		tell application "Arc"
 			activate
-			-- Optional Space routing.
-			set targetWin to missing value
-			set targetSpace to missing value
+			-- Optional Space routing. Loop variables (w, s) go stale once the
+			-- repeat exits, even wrapped in "a reference to" -- Arc's scripting
+			-- bridge only resolves them within the loop iteration. Instead,
+			-- record the plain 1-based indices and re-derive fresh object
+			-- specifiers (by index) at the point of use, after the loop.
+			set targetWinIndex to missing value
+			set targetSpaceIndex to missing value
 			if spaceName is not "" then
 				try
+					set wi to 0
 					repeat with w in windows
+						set wi to wi + 1
+						set si to 0
 						repeat with s in spaces of w
+							set si to si + 1
 							if title of s is spaceName then
-								set targetWin to w
-								set targetSpace to s
+								set targetWinIndex to wi
+								set targetSpaceIndex to si
 								exit repeat
 							end if
 						end repeat
-						if targetWin is not missing value then exit repeat
+						if targetWinIndex is not missing value then exit repeat
 					end repeat
 				end try
 			end if
@@ -31,10 +39,14 @@ on run {targetURL, appName, spaceName}
 				end try
 				return "reloaded"
 			end if
-			if targetSpace is not missing value then focus targetSpace
-			if targetWin is missing value then
+			if targetSpaceIndex is not missing value then
+				focus (a reference to (space targetSpaceIndex of window targetWinIndex))
+			end if
+			if targetWinIndex is missing value then
 				if (count of windows) is 0 then make new window
-				set targetWin to front window
+				set targetWin to a reference to front window
+			else
+				set targetWin to a reference to (window targetWinIndex)
 			end if
 			tell targetWin to make new tab with properties {URL:targetURL}
 			return "opened"
