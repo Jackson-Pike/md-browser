@@ -1,4 +1,8 @@
 {
+  "name": "md-browser",
+  "owner": {
+    "name": "Jackson Pike"
+  },
   "plugins": [
     {
       "name": "md-browser",
