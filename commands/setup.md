@@ -33,7 +33,7 @@ Store the chosen AppleScript app name exactly: `Arc`, `Google Chrome`,
 Launch Arc if needed, then list Space names:
 
 ```bash
-osascript -e 'tell application "Arc" to return title of spaces of front window'
+osascript -e 'tell application "Arc" to return title of every space of every window'
 ```
 
 Use AskUserQuestion to present each Space name plus a "No specific space
@@ -72,7 +72,7 @@ Show the written config. Offer to verify by writing a scratch file and
 confirming it opens:
 
 ```bash
-print '# md-browser test' > /tmp/mdb-setup-test.md
+echo '# md-browser test' > /tmp/mdb-setup-test.md
 echo '{"tool_input":{"file_path":"/tmp/mdb-setup-test.md"}}' | \
   "${CLAUDE_PLUGIN_ROOT}/bin/open-md.sh"
 ```
