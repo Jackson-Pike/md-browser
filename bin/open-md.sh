@@ -28,7 +28,11 @@ if [[ "$scope_count" -gt 0 ]]; then
   matched=0
   while IFS= read -r pattern; do
     [[ -n "$pattern" ]] || continue
-    # In [[ ]] pattern matching, * spans '/', so **/ behaves like * (glob-style).
+    # In [[ ]] matching, * spans '/', but a literal '/' in the pattern still
+    # requires a path separator — so a leading **/ requires at least one
+    # directory segment and will NOT match a file directly in that folder.
+    # Patterns must include a direct-child variant (e.g. DIR/*.md) to also
+    # match files directly in a folder.
     if [[ "$p" == ${~pattern} ]]; then matched=1; break; fi
   done < <(jq -r '.scope[]' "$config" 2>/dev/null)
   [[ "$matched" -eq 1 ]] || exit 0

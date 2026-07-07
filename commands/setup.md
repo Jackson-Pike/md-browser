@@ -44,9 +44,15 @@ Use AskUserQuestion to present each Space name plus a "No specific space
 Use AskUserQuestion with these options:
 
 - **All Markdown files** — omit `scope`.
-- **Only specs & plans (recommended)** — `scope` = `["**/superpowers/**/*.md", "**/*-design.md", "**/*-plan.md"]`.
-- **A specific folder** — ask for an absolute folder path `DIR`; `scope` = `["DIR/**/*.md"]`.
+- **Only specs & plans (recommended)** — `scope` = `["**/superpowers/**/*.md", "**/superpowers/*.md", "**/*-design.md", "**/*-plan.md"]`.
+- **A specific folder** — ask for an absolute folder path `DIR`; `scope` = `["DIR/**/*.md", "DIR/*.md"]`.
 - **Custom** — ask for one or more glob patterns; use them as `scope`.
+
+Note: in `[[ ]]` pattern matching, `*` spans `/`, but a literal `/` in the
+pattern still requires a path separator — so a leading `**/` requires at
+least one directory segment and won't match a file directly in that folder.
+That's why each preset above pairs a `**/...` (nested) pattern with a
+direct-child variant.
 
 ## 5. Write the config
 
@@ -58,7 +64,7 @@ mkdir -p "${CLAUDE_PLUGIN_DATA}"
 jq -n \
   --arg browser "Arc" \
   --arg space "FS-Workbench" \
-  --argjson scope '["**/superpowers/**/*.md","**/*-design.md","**/*-plan.md"]' \
+  --argjson scope '["**/superpowers/**/*.md","**/superpowers/*.md","**/*-design.md","**/*-plan.md"]' \
   '{browser:$browser} + (if $space=="" then {} else {space:$space} end) + {scope:$scope}' \
   > "${CLAUDE_PLUGIN_DATA}/config.json"
 cat "${CLAUDE_PLUGIN_DATA}/config.json"

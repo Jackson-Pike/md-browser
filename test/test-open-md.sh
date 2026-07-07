@@ -70,5 +70,18 @@ check "empty scope opens" "$CLAUDE_PLUGIN_ROOT/bin/open-in-browser.applescript${
 writecfg '{"browser":"Arc","space":null}'
 check "null space empty" "$CLAUDE_PLUGIN_ROOT/bin/open-in-browser.applescript${sep}file:///tmp/a.md${sep}Arc${sep}${sep}" "$(run '{"tool_input":{"file_path":"/tmp/a.md"}}')"
 
+# 10) Recommended preset (with direct-child variants) matches a file directly
+# in a superpowers folder, not just a nested one.
+writecfg '{"browser":"Arc","scope":["**/superpowers/**/*.md","**/superpowers/*.md","**/*-design.md","**/*-plan.md"]}'
+check "preset: direct child of superpowers opens" "$CLAUDE_PLUGIN_ROOT/bin/open-in-browser.applescript${sep}file:///Users/x/superpowers/notes.md${sep}Arc${sep}${sep}" "$(run '{"tool_input":{"file_path":"/Users/x/superpowers/notes.md"}}')"
+check "preset: nested superpowers file still opens" "$CLAUDE_PLUGIN_ROOT/bin/open-in-browser.applescript${sep}file:///Users/x/superpowers/specs/a.md${sep}Arc${sep}${sep}" "$(run '{"tool_input":{"file_path":"/Users/x/superpowers/specs/a.md"}}')"
+
+# 11) "Specific folder" preset (with direct-child variant) matches both a
+# direct child and a nested file, but not a sibling folder.
+writecfg '{"browser":"Arc","scope":["/proj/docs/**/*.md","/proj/docs/*.md"]}'
+check "folder: direct child opens" "$CLAUDE_PLUGIN_ROOT/bin/open-in-browser.applescript${sep}file:///proj/docs/a.md${sep}Arc${sep}${sep}" "$(run '{"tool_input":{"file_path":"/proj/docs/a.md"}}')"
+check "folder: nested file opens" "$CLAUDE_PLUGIN_ROOT/bin/open-in-browser.applescript${sep}file:///proj/docs/sub/b.md${sep}Arc${sep}${sep}" "$(run '{"tool_input":{"file_path":"/proj/docs/sub/b.md"}}')"
+check "folder: sibling skipped" "" "$(run '{"tool_input":{"file_path":"/proj/other/c.md"}}')"
+
 print -r -- "---"; print -r -- "pass=$pass fail=$fail"
 [[ $fail -eq 0 ]]
